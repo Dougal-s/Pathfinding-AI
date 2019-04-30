@@ -21,7 +21,7 @@ private:
 	std::vector<std::thread> threads;
 
 	void init() {
-		threads.resize(std::thread::hardware_concurrency());
+		threads.resize(std::thread::hardware_concurrency()-1);
 
 		sf::ContextSettings settings;
     	settings.antialiasingLevel = 8;
