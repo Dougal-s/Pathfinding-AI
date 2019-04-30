@@ -7,14 +7,13 @@
 #include <numeric>
 #include <random>
 #include <vector>
-
+#include <complex>
 
 #include <SFML/Graphics.hpp>
 
 #include "AI.hpp"
-#include "PVector.hpp"
 
-typedef PVector Target;
+typedef std::complex<float> Target;
 
 int width = 800;
 int height = 800;
@@ -53,15 +52,15 @@ public:
         window.draw(rectangle);
     }
 
-    bool contains(PVector point) {
-        return boundingBox.contains(sf::Vector2f(point.x, point.y));
+    bool contains(std::complex<float> point) {
+        return boundingBox.contains(sf::Vector2f(point.real(), point.imag()));
     }
 private:
 };
 
 class Brain {
 public:
-    std::vector<PVector> Directions;
+    std::vector<std::complex<float>> Directions;
     int step = 0;
 
     void init(int size, bool random = true) {
@@ -73,9 +72,9 @@ public:
 
     void randomize() {
         std::uniform_real_distribution<float> distribution(0.0, 2*M_PI);
-        std::generate(Directions.begin(), Directions.end(), [&](){
-            return PVector::fromAngle(distribution(generator));
-        });
+		std::generate(Directions.begin(), Directions.end(), [&](){
+			return std::polar(1.f, distribution(generator));
+		});
     }
 
     Brain clone() {
@@ -95,7 +94,7 @@ public:
         for (int i = 0; i < Directions.size(); i++) {
             float rand = mutationDist(generator);
             if (rand < mutationRate) {
-                Directions[i] = PVector::fromAngle(angleDist(generator));
+                Directions[i] = std::polar(1.f, angleDist(generator));
             }
         }
     }
@@ -105,7 +104,7 @@ private:
 
 class Dot {
 public:
-    PVector pos, vel, acc;
+    std::complex<float> pos, vel, acc;
     Brain brain;
     bool dead = false;
 
@@ -114,9 +113,9 @@ public:
     float fitness;
 
     Dot(bool randomizeDirections = true) {
-        pos = PVector{(float)width/2.0f, (float)height - 50.0f};
-        vel = PVector{0.0f, 0.0f};
-        acc = PVector{0.0f, 0.0f};
+        pos = {(float)width/2.0f, (float)height - 50.0f};
+        vel = {0.0f, 0.0f};
+        acc = {0.0f, 0.0f};
 
         brain.init(maxNumberSteps, randomizeDirections);
     }
@@ -124,9 +123,9 @@ public:
     void update(Target target, std::vector<Obstacle>& obstacles) {
         if (!dead && !reachedTarget) {
             move();
-            if (pos.x < radius || pos.y < radius || pos.x > width-radius || pos.y > height-radius) {
+            if (pos.real() < radius || pos.imag() < radius || pos.real() > width-radius || pos.imag() > height-radius) {
                 dead = true;
-            } else if (dist(pos, target) < 3*radius) {
+            } else if (std::abs(pos-target) < 3*radius) {
                 reachedTarget = true;
             } else {
                 for (int i = 0; i < obstacles.size(); i++) {
@@ -141,7 +140,7 @@ public:
     void draw(sf::RenderWindow& window) {
         sf::CircleShape circle(radius);
         circle.setFillColor(sf::Color::Black);
-        circle.setPosition(pos.x-radius,pos.y-radius);
+        circle.setPosition(pos.real()-radius, pos.imag()-radius);
         window.draw(circle);
     }
 
@@ -149,7 +148,7 @@ public:
         if (reachedTarget) {
             fitness = 1.0f/16.0f + 10000.0f/(float)(brain.step * brain.step);
         } else {
-            float distanceToTargetSq = distSq(pos, target);
+            float distanceToTargetSq = std::norm(pos-target);
             fitness = 1.0f/distanceToTargetSq;
         }
     }
@@ -170,7 +169,9 @@ private:
         }
 
         vel += acc;
-        vel.limit(5);
+        if (std::norm(vel) > 5*5) {
+	        vel *= 5/sqrtf(std::norm(vel));
+	    }
         pos += vel;
     }
 
@@ -219,22 +220,22 @@ public:
         circle.setFillColor(sf::Color::Black);
         if (gen != 0) {
             for (int i = 1; i < dots.size(); i++) {
-                circle.setPosition(dots[i].pos.x-radius, dots[i].pos.y-radius);
+                circle.setPosition(dots[i].pos.real()-radius, dots[i].pos.imag()-radius);
                 window.draw(circle);
             }
             // Draw Random
             circle.setOutlineThickness(radius/2);
             circle.setOutlineColor(sf::Color::Red);
-            circle.setPosition(dots[1].pos.x-radius, dots[1].pos.y-radius);
+            circle.setPosition(dots[1].pos.real()-radius, dots[1].pos.imag()-radius);
             window.draw(circle);
             // Draw champion
             circle.setFillColor(sf::Color::Green);
             circle.setOutlineThickness(0);
-            circle.setPosition(dots[0].pos.x-radius, dots[0].pos.y-radius);
+            circle.setPosition(dots[0].pos.real()-radius, dots[0].pos.imag()-radius);
             window.draw(circle);
         } else {
             for (int i = 0; i < dots.size(); i++) {
-                circle.setPosition(dots[i].pos.x-radius, dots[i].pos.y-radius);
+                circle.setPosition(dots[i].pos.real()-radius, dots[i].pos.imag()-radius);
                 window.draw(circle);
             }
         }
@@ -243,7 +244,7 @@ public:
         circle.setFillColor(sf::Color::Red);
         circle.setOutlineThickness(radius/2);
         circle.setOutlineColor(sf::Color::Black);
-        circle.setPosition(target.x - 2*radius, target.y - 2*radius);
+        circle.setPosition(target.real() - 2*radius, target.imag() - 2*radius);
         window.draw(circle);
     }
 
