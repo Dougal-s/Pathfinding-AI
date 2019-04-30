@@ -29,9 +29,6 @@ const float targety = 50;
 
 class Obstacle{
 public:
-    sf::RectangleShape rectangle;
-    sf::FloatRect boundingBox;
-
     Obstacle() {}
 
     Obstacle(int w, int h, int x, int y) {
@@ -56,6 +53,8 @@ public:
         return boundingBox.contains(sf::Vector2f(point.real(), point.imag()));
     }
 private:
+	sf::RectangleShape rectangle;
+	sf::FloatRect boundingBox;
 };
 
 class Brain {
