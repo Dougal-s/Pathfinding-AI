@@ -130,20 +130,11 @@ public:
 		}
 	}
 
-	void draw(sf::RenderWindow& window) {
-		sf::CircleShape circle(radius);
-		circle.setFillColor(sf::Color::Black);
-		circle.setPosition(pos.real()-radius, pos.imag()-radius);
-		window.draw(circle);
-	}
-
 	void calculateFitness(Target target) {
-		if (reachedTarget) {
+		if (reachedTarget)
 			fitness = 1.0f/16.0f + 10000.0f/(float)(brain.step * brain.step);
-		} else {
-			float distanceToTargetSq = std::norm(pos-target);
-			fitness = 1.0f/distanceToTargetSq;
-		}
+		else
+			fitness = 1.0f/std::norm(pos-target);
 	}
 
 	Dot createChild() {
@@ -166,8 +157,6 @@ private:
 			vel *= 5/sqrtf(std::norm(vel));
 		pos += vel;
 	}
-
-
 };
 
 class Population::PopulationImpl {
@@ -200,7 +189,6 @@ public:
 	}
 
 	void draw(sf::RenderWindow& window) {
-
 		// Draw Obstacles
 		for (int i = 0; i < obstacles.size(); i++)
 			obstacles[i].draw(window);
@@ -330,7 +318,6 @@ private:
 
 		bestDot = maxIndex;
 	}
-
 };
 
 Population::Population() {
