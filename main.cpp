@@ -33,7 +33,6 @@ private:
 	}
 
 	void mainLoop() {
-
 		while (window.isOpen()) {
 			sf::Event event;
 			while (window.pollEvent(event)) {
@@ -49,9 +48,7 @@ private:
 		}
 	}
 
-	void cleanup() {
-
-	}
+	void cleanup() {}
 };
 
 int main(int argc, char *argv[]) {
