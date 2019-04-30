@@ -4,7 +4,6 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
-#include <numeric>
 #include <random>
 #include <vector>
 #include <complex>
@@ -15,17 +14,19 @@
 
 typedef std::complex<float> Target;
 
-int width = 800;
-int height = 800;
+namespace {
+	int width = 800;
+	int height = 800;
 
-constexpr int radius = 4;
+	constexpr int radius = 4;
 
-constexpr int maxNumberSteps = 400;
+	constexpr int maxNumberSteps = 400;
 
-std::mt19937 generator;
+	std::mt19937 generator;
 
-const float targetx = width/2;
-const float targety = 50;
+	const float targetx = width/2;
+	const float targety = 50;
+}
 
 class Obstacle{
 public:
@@ -59,26 +60,26 @@ private:
 
 class Brain {
 public:
-	std::vector<std::complex<float>> Directions;
+	std::vector<std::complex<float>> directions;
 	int step = 0;
 
 	void init(int size, bool random = true) {
-		Directions.resize(size);
+		directions.resize(size);
 		if (random) randomize();
 	}
 
 	void randomize() {
 		std::uniform_real_distribution<float> distribution(0.0, 2*M_PI);
-		std::generate(Directions.begin(), Directions.end(), [&](){
+		std::generate(directions.begin(), directions.end(), [&](){
 			return std::polar(1.f, distribution(generator));
 		});
 	}
 
 	Brain clone() {
 		Brain clone;
-		clone.init(Directions.size(), false);
+		clone.init(directions.size(), false);
 
-		std::copy(Directions.begin(), Directions.end(), clone.Directions.begin());
+		std::copy(directions.begin(), directions.end(), clone.directions.begin());
 
 		return clone;
 	}
@@ -88,9 +89,9 @@ public:
 		std::uniform_real_distribution<float> angleDist(0.0, 2*M_PI);
 		float mutationRate = 0.01;
 
-		for (int i = 0; i < Directions.size(); i++) {
+		for (auto& direction : directions) {
 			if (mutationDist(generator) < mutationRate)
-				Directions[i] = std::polar(1.f, angleDist(generator));
+				direction = std::polar(1.f, angleDist(generator));
 		}
 	}
 private:
@@ -153,8 +154,8 @@ public:
 
 private:
 	void move() {
-		if (brain.Directions.size() > brain.step) {
-			acc = brain.Directions[brain.step];
+		if (brain.directions.size() > brain.step) {
+			acc = brain.directions[brain.step];
 			++brain.step;
 		} else {
 			dead = true;
@@ -169,7 +170,7 @@ private:
 
 };
 
-class Population {
+class Population::PopulationImpl {
 public:
 
 	void initialize(int size) {
@@ -330,9 +331,13 @@ private:
 		bestDot = maxIndex;
 	}
 
-} population;
+};
 
-void setup(const int inWidth, const int inHeight) {
+Population::Population() {
+	populationImpl = new PopulationImpl;
+}
+
+void Population::setup(const int inWidth, const int inHeight) {
 	width = inWidth;
 	height = inHeight;
 
@@ -352,26 +357,30 @@ void setup(const int inWidth, const int inHeight) {
 		{250, 40, width/2, height/2+260}
 	};
 
-	population.initialize(2000, obstacles);
+	populationImpl->initialize(2000, obstacles);
 }
 
-void update(std::vector<std::thread>& threads, int numThreads) {
-	if (population.allDotsDead()) {
+void Population::update(std::vector<std::thread>& threads, int numThreads) {
+	if (populationImpl->allDotsDead()) {
 		//genetic algorithm
-		population.calculateFitness();
-		population.selectNextGeneration();
-		population.mutate();
+		populationImpl->calculateFitness();
+		populationImpl->selectNextGeneration();
+		populationImpl->mutate();
 	} else {
 		for (int i = 0; i < numThreads; i++)
-			threads[i] = population.spawnUpdateThread(numThreads+1, i);
+			threads[i] = populationImpl->spawnUpdateThread(numThreads+1, i);
 
-		population.update(numThreads+1, numThreads);
+		populationImpl->update(numThreads+1, numThreads);
 
 		for (int i = 0; i < numThreads; i++)
 			threads[i].join();
 	}
 }
 
-void draw(sf::RenderWindow& window) {
-	population.draw(window);
+void Population::draw(sf::RenderWindow& window) {
+	populationImpl->draw(window);
+}
+
+Population::~Population() {
+	delete populationImpl;
 }

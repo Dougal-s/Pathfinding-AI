@@ -20,6 +20,8 @@ private:
 	sf::RenderWindow window;
 	std::vector<std::thread> threads;
 
+	Population population;
+
 	void init() {
 		threads.resize(std::thread::hardware_concurrency()-1);
 
@@ -29,7 +31,7 @@ private:
 		window.create(sf::VideoMode(width, height), "Dot Game", sf::Style::Default, settings);
 		window.setVerticalSyncEnabled(true);
 
-		setup(width, height);
+		population.setup(width, height);
 	}
 
 	void mainLoop() {
@@ -40,10 +42,10 @@ private:
 					window.close();
 			}
 
-			update(threads, threads.size());
+			population.update(threads, threads.size());
 
 			window.clear(sf::Color::White);
-			draw(window);
+			population.draw(window);
 			window.display();
 		}
 	}
