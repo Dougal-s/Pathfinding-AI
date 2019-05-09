@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
 
 	try {
 		app.run();
-	} catch (const char * error) {
-		std::cerr << error << std::endl;
+	} catch (const std::exception& error) {
+		std::cerr << error.what() << std::endl;
 	}
 
 	return 0;
