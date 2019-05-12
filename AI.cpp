@@ -69,7 +69,7 @@ public:
 	}
 
 	void randomize() {
-		std::uniform_real_distribution<float> distribution(0.0, 2*M_PI);
+		std::uniform_real_distribution<float> distribution(0.f, 2.f*M_PI);
 		std::generate(directions.begin(), directions.end(), [&](){
 			return std::polar(1.f, distribution(generator));
 		});
@@ -85,8 +85,8 @@ public:
 	}
 
 	void mutate() {
-		std::uniform_real_distribution<float> mutationDist(0.0, 1.0);
-		std::uniform_real_distribution<float> angleDist(0.0, 2*M_PI);
+		std::uniform_real_distribution<float> mutationDist(0.0, 1.f);
+		std::uniform_real_distribution<float> angleDist(0.0, 2.f*M_PI);
 		float mutationRate = 0.01;
 
 		for (auto& direction : directions) {
@@ -100,9 +100,9 @@ private:
 
 class Dot {
 public:
-	std::complex<float> pos{(float)width/2.0f, (float)height - 50.0f};
-	std::complex<float> vel{0.f, 0.f};
-	std::complex<float> acc{0.f, 0.f};
+	std::complex<float> pos = {width/2.f, height - 50.f};
+	std::complex<float> vel = {0.f, 0.f};
+	std::complex<float> acc = {0.f, 0.f};
 	Brain brain;
 	bool dead = false;
 
@@ -132,9 +132,9 @@ public:
 
 	void calculateFitness(Target target) {
 		if (reachedTarget)
-			fitness = 1.0f/16.0f + 10000.0f/(float)(brain.step * brain.step);
+			fitness = 1.f/16.f + 10000.f/(brain.step * brain.step);
 		else
-			fitness = 1.0f/std::norm(pos-target);
+			fitness = 1.f/std::norm(pos-target);
 	}
 
 	Dot createChild() {
